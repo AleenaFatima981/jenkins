@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+        
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Unit and Integration Tests') {
+            steps {
+                
+                sh 'mvn test'
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                
+                sh 'mvn sonar:sonar'
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                
+                sh 'mvn org.owasp:dependency-check-maven:check'
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                
+                sh './deploy-to-staging.sh'
+            }
+        }
+
+        stage('Integration Tests on Staging') {
+            steps {
+                
+                sh './run-integration-tests.sh'
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                
+                sh './deploy-to-production.sh'
+            }
+        }
+    }
+
+    post {
+        failure {
+            mail body: "Pipeline failed. Please check logs attached.",
+                to: "developer@example.com",
+                subject: "Pipeline Failure Notification",
+                attachLog: true
+        }
+    }
+}
